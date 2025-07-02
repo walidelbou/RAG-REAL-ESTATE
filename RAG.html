@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>South Florida Real Estate Portfolio</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Chosen Palette: "Warm Neutral Harmony" - A calming palette using beige (#f5f5dc), warm gray (#d6d3d1), slate blue accents (#64748b), and dark text (#1f2937) for a professional, serene, and high-end feel. -->
+    <!-- Application Structure Plan: The SPA is designed as an interactive dashboard. The default view is a high-level "Comparison" section with key stats and a financial bar chart, allowing for quick side-by-side evaluation, which is the primary user task. Clicking "View Details" or using the sticky top navigation smoothly scrolls the user to dedicated sections for each property. This structure supports both rapid comparison and in-depth exploration within a single, seamless page, enhancing usability by avoiding page reloads and providing clear navigation pathways. -->
+    <!-- Visualization & Content Choices: 
+    - Report Info: Side-by-side property listings -> Goal: Compare -> Viz/Method: Responsive grid with property cards (HTML/Tailwind) -> Interaction: 'View Details' buttons scroll to full info -> Justification: Allows quick scanning of key features before diving deeper.
+    - Report Info: Price, HOA, Property Tax -> Goal: Compare financials -> Viz/Method: Grouped Bar Chart (Chart.js/Canvas) -> Interaction: Hover tooltips for exact values -> Justification: Provides an immediate, clear visual comparison of financial commitments, which is a critical decision factor.
+    - Report Info: Full property details -> Goal: Inform -> Viz/Method: Detailed two-column text and stat blocks (HTML/Tailwind) -> Interaction: Scroll-to navigation -> Justification: Presents comprehensive information in a structured, readable format once a user has chosen to explore a property further.
+    -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 800px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 300px;
+            max-height: 400px;
+        }
+        @media (min-width: 768px) {
+            .chart-container {
+                height: 400px;
+            }
+        }
+        .nav-link.active {
+            color: #f5f5dc;
+            background-color: #64748b;
+        }
+    </style>
+     <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+</head>
+<body class="bg-stone-200 text-stone-800">
+
+    <header class="bg-white/80 backdrop-blur-md shadow-md sticky top-0 z-50">
+        <nav class="container mx-auto px-4">
+            <ul class="flex items-center justify-center space-x-2 sm:space-x-4 py-3">
+                <li><a href="#comparison" class="nav-link text-sm sm:text-base font-medium text-stone-600 hover:bg-stone-200 px-3 py-2 rounded-md transition-colors duration-300">Comparison</a></li>
+                <li><a href="#listing1" class="nav-link text-sm sm:text-base font-medium text-stone-600 hover:bg-stone-200 px-3 py-2 rounded-md transition-colors duration-300">Boca Raton Estate</a></li>
+                <li><a href="#listing2" class="nav-link text-sm sm:text-base font-medium text-stone-600 hover:bg-stone-200 px-3 py-2 rounded-md transition-colors duration-300">Miami Beach Condo</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main class="container mx-auto p-4 sm:p-8">
+
+        <section id="hero" class="text-center mb-12">
+            <h1 class="text-4xl sm:text-5xl font-bold text-slate-700 mb-2">Featured South Florida Properties</h1>
+            <p class="text-lg text-stone-600 max-w-3xl mx-auto">An interactive overview of premier luxury listings. Compare key features and financials to find your perfect home.</p>
+        </section>
+
+        <section id="comparison" class="scroll-mt-20 mb-16">
+            <h2 class="text-3xl font-bold text-center mb-8 text-slate-700">At-a-Glance Comparison</h2>
+            <div id="property-cards-container" class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-12">
+            </div>
+            
+            <div class="bg-white p-6 rounded-2xl shadow-lg">
+                <h3 class="text-2xl font-bold text-center mb-4 text-slate-700">Annual Cost Comparison</h3>
+                 <p class="text-sm text-stone-500 text-center mb-6">This chart visualizes the estimated annual financial commitment for each property, combining HOA fees and property taxes. Price is shown for scale.</p>
+                <div class="chart-container">
+                    <canvas id="financialsChart"></canvas>
+                </div>
+            </div>
+        </section>
+
+        <div id="detailed-listings-container" class="space-y-16">
+        </div>
+
+    </main>
+    
+    <footer class="text-center py-8 mt-12 bg-white/50">
+        <p class="text-stone-500">Real Estate Portfolio SPA | Data as of July 2, 2025</p>
+    </footer>
+
+    <script>
+        const propertyData = [
+            {
+                id: 'listing1',
+                title: 'Luxurious Waterfront Estate',
+                location: 'Boca Raton, Florida',
+                mlsId: 'RX-10982145',
+                price: 3495000,
+                status: 'Active Listing',
+                overview: 'This magnificent single-family home offers unparalleled luxury, comfort, and breathtaking views of the Intracoastal Waterway. Enjoy direct ocean access with no fixed bridges from your private dock.',
+                details: {
+                    type: 'Single-Family Home (Detached)',
+                    lotSize: '0.35 Acres',
+                    livingArea: '5,850 sq. ft.',
+                    bedrooms: 5,
+                    bathrooms: '6 full, 1 half',
+                    yearBuilt: 2019,
+                    garage: '3-car'
+                },
+                features: {
+                    interior: 'Soaring foyer, great room with water views, chef\'s kitchen with Sub-Zero/Wolf appliances, formal dining with wine cellar, club room, and a primary suite with dual bathrooms.',
+                    exterior: '100-foot private dock with boat lift, saltwater infinity-edge pool, summer kitchen, and CBS construction with impact glass.'
+                },
+                community: {
+                    name: 'Royal Palm Yacht & Country Club',
+                    hoaFee: 450,
+                    tax: 68500,
+                    club: 'Optional and separate.'
+                }
+            },
+            {
+                id: 'listing2',
+                title: 'Modern Oceanfront Condo',
+                location: 'South of Fifth, Miami Beach',
+                mlsId: 'A11593301',
+                price: 2150000,
+                status: 'Active Listing',
+                overview: 'Experience the ultimate Miami lifestyle in this stunning, high-floor residence. This flow-through unit offers spectacular, unobstructed views of the Atlantic Ocean and the Miami skyline.',
+                details: {
+                    type: 'Condominium',
+                    lotSize: 'N/A',
+                    livingArea: '2,078 sq. ft.',
+                    bedrooms: 3,
+                    bathrooms: '3 full, 1 half',
+                    yearBuilt: 2016,
+                    garage: '2 valet spaces'
+                },
+                features: {
+                    interior: 'Private elevator foyer, open living space with white oak flooring, European-style kitchen with Miele/Sub-Zero appliances, and a fully integrated smart home system.',
+                    exterior: 'Two private terraces for both sunrise (ocean) and sunset (bay) views. Direct beach access with chair and towel service.'
+                },
+                community: {
+                    name: 'Continuum on South Beach (example)',
+                    hoaFee: 2450,
+                    tax: 41000,
+                    amenities: '24-hour concierge, two resort-style pools, spa & fitness center, tennis court.'
+                }
+            }
+        ];
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const cardsContainer = document.getElementById('property-cards-container');
+            const detailsContainer = document.getElementById('detailed-listings-container');
+
+            propertyData.forEach(prop => {
+                const cardHTML = `
+                    <div class="bg-white rounded-2xl shadow-lg overflow-hidden transform hover:-translate-y-2 transition-transform duration-300">
+                        <div class="p-6">
+                            <p class="text-sm text-slate-500">${prop.location}</p>
+                            <h3 class="text-2xl font-bold text-slate-800 mb-2">${prop.title}</h3>
+                            <p class="text-3xl font-bold text-slate-700 mb-4">$${prop.price.toLocaleString()}</p>
+                            <div class="flex justify-around text-center border-t border-b border-stone-200 my-4 py-3">
+                                <div class="px-2">
+                                    <span class="font-bold text-xl">${prop.details.bedrooms}</span>
+                                    <span class="text-sm text-stone-500 block">Beds</span>
+                                </div>
+                                <div class="px-2">
+                                    <span class="font-bold text-xl">${prop.details.bathrooms.split(' ')[0]}</span>
+                                    <span class="text-sm text-stone-500 block">Baths</span>
+                                </div>
+                                <div class="px-2">
+                                    <span class="font-bold text-xl">${prop.details.livingArea}</span>
+                                    <span class="text-sm text-stone-500 block">Sq.Ft.</span>
+                                </div>
+                            </div>
+                            <p class="text-stone-600 text-sm mb-4 h-16">${prop.overview.substring(0, 120)}...</p>
+                            <a href="#${prop.id}" class="block w-full text-center bg-slate-700 text-white font-bold py-3 rounded-lg hover:bg-slate-800 transition-colors">View Details</a>
+                        </div>
+                    </div>
+                `;
+                cardsContainer.innerHTML += cardHTML;
+
+                const detailHTML = `
+                    <section id="${prop.id}" class="scroll-mt-20 bg-white p-6 sm:p-8 rounded-2xl shadow-xl">
+                        <div class="grid grid-cols-1 lg:grid-cols-5 gap-8">
+                            <div class="lg:col-span-2">
+                                <h3 class="text-3xl font-bold text-slate-800">${prop.title}</h3>
+                                <p class="text-md text-slate-500 mb-4">${prop.location}</p>
+                                <p class="text-4xl font-bold text-slate-700 mb-6">$${prop.price.toLocaleString()}</p>
+                                <div class="space-y-3 text-stone-700">
+                                    <p><strong>MLS ID:</strong> ${prop.mlsId}</p>
+                                    <p><strong>Property Type:</strong> ${prop.details.type}</p>
+                                    <p><strong>Bedrooms:</strong> ${prop.details.bedrooms}</p>
+                                    <p><strong>Bathrooms:</strong> ${prop.details.bathrooms}</p>
+                                    <p><strong>Living Area:</strong> ${prop.details.livingArea}</p>
+                                    <p><strong>Lot Size:</strong> ${prop.details.lotSize}</p>
+                                    <p><strong>Year Built:</strong> ${prop.details.yearBuilt}</p>
+                                    <p><strong>HOA Fee:</strong> $${prop.community.hoaFee.toLocaleString()}/month</p>
+                                    <p><strong>Est. Annual Tax:</strong> $${prop.community.tax.toLocaleString()}</p>
+                                </div>
+                            </div>
+                            <div class="lg:col-span-3">
+                                <h4 class="text-2xl font-bold text-slate-700 mb-3">Overview</h4>
+                                <p class="text-stone-600 mb-6">${prop.overview}</p>
+                                
+                                <h4 class="text-xl font-bold text-slate-700 mb-2">Interior Features</h4>
+                                <p class="text-stone-600 mb-4">${prop.features.interior}</p>
+                                
+                                <h4 class="text-xl font-bold text-slate-700 mb-2">Exterior & Amenities</h4>
+                                <p class="text-stone-600 mb-4">${prop.features.exterior}</p>
+                                
+                                <h4 class="text-xl font-bold text-slate-700 mb-2">Community: ${prop.community.name}</h4>
+                                ${prop.community.amenities ? `<p class="text-stone-600">${prop.community.amenities}</p>` : ''}
+                                ${prop.community.club ? `<p class="text-stone-600"><strong>Club Membership:</strong> ${prop.community.club}</p>` : ''}
+                            </div>
+                        </div>
+                    </section>
+                `;
+                detailsContainer.innerHTML += detailHTML;
+            });
+            
+            renderChart();
+            setupNavigation();
+        });
+
+        function renderChart() {
+            const ctx = document.getElementById('financialsChart').getContext('2d');
+            const labels = propertyData.map(p => p.location);
+            const prices = propertyData.map(p => p.price);
+            const annualHoa = propertyData.map(p => p.community.hoaFee * 12);
+            const annualTaxes = propertyData.map(p => p.community.tax);
+
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: 'Purchase Price',
+                            data: prices,
+                            backgroundColor: '#e2e8f0',
+                            borderColor: '#cbd5e1',
+                            borderWidth: 1,
+                            yAxisID: 'y'
+                        },
+                        {
+                            label: 'Annual HOA',
+                            data: annualHoa,
+                            backgroundColor: '#94a3b8',
+                            borderColor: '#64748b',
+                            borderWidth: 1,
+                            yAxisID: 'y1'
+                        },
+                        {
+                            label: 'Annual Tax',
+                            data: annualTaxes,
+                            backgroundColor: '#64748b',
+                            borderColor: '#475569',
+                            borderWidth: 1,
+                            yAxisID: 'y1'
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    let label = context.dataset.label || '';
+                                    if (label) {
+                                        label += ': ';
+                                    }
+                                    if (context.parsed.y !== null) {
+                                        label += new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(context.parsed.y);
+                                    }
+                                    return label;
+                                }
+                            }
+                        },
+                        legend: {
+                            position: 'top',
+                        }
+                    },
+                    scales: {
+                        x: {
+                            grid: {
+                                display: false
+                            }
+                        },
+                        y: {
+                            type: 'linear',
+                            position: 'left',
+                            title: {
+                                display: true,
+                                text: 'Purchase Price (USD)'
+                            },
+                             ticks: {
+                                callback: function(value, index, values) {
+                                    return '$' + (value / 1000000) + 'M';
+                                }
+                            }
+                        },
+                        y1: {
+                            type: 'linear',
+                            position: 'right',
+                            title: {
+                                display: true,
+                                text: 'Annual Costs (USD)'
+                            },
+                            grid: {
+                                drawOnChartArea: false, 
+                            },
+                            ticks: {
+                                callback: function(value, index, values) {
+                                    return '$' + (value / 1000) + 'K';
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        
+        function setupNavigation() {
+            const navLinks = document.querySelectorAll('.nav-link');
+            const sections = document.querySelectorAll('section[id]');
+
+            const observerOptions = {
+                root: null,
+                rootMargin: '0px',
+                threshold: 0.4 
+            };
+
+            const observer = new IntersectionObserver((entries, observer) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        navLinks.forEach(link => {
+                            link.classList.toggle('active', link.getAttribute('href').substring(1) === entry.target.id);
+                        });
+                    }
+                });
+            }, observerOptions);
+
+            sections.forEach(section => {
+                observer.observe(section);
+            });
+        }
+    </script>
+</body>
+</html>
